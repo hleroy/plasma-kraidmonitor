@@ -1,35 +1,37 @@
-import QtQuick 2.15
-import QtQuick.Layouts 1.15
-import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.components 3.0 as PlasmaComponents3
-import org.kde.plasma.private.kraidmonitor 1.0 as KRaidMonitorPrivate
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.plasmoid
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.components 3.0 as PlasmaComponents // Change to version 3.0
+import org.kde.plasma.private.kraidmonitor as KRaidMonitorPrivate
+import org.kde.kirigami 2.0 as Kirigami
 
-Item {
+
+PlasmoidItem {
     id: root
 
-    Plasmoid.fullRepresentation: ColumnLayout {
-        PlasmaCore.IconItem {
+    fullRepresentation: ColumnLayout {
+        Kirigami.Icon {
             Layout.alignment: Qt.AlignHCenter
             source: kraidMonitor.icon
-            width: PlasmaCore.Units.iconSizes.huge
+            width: Kirigami.Units.iconSizes.huge
             height: width
         }
 
-        PlasmaComponents3.Label {
+        PlasmaComponents.Label {
             Layout.alignment: Qt.AlignHCenter
             text: kraidMonitor.selectedArray + ": " + kraidMonitor.status
         }
     }
 
-    Plasmoid.preferredRepresentation: Plasmoid.fullRepresentation
+    preferredRepresentation: fullRepresentation
 
     KRaidMonitorPrivate.KRaidMonitor {
         id: kraidMonitor
     }
 
     function updateConfig() {
-        kraidMonitor.updateInterval = plasmoid.configuration.updateInterval
+        kraidMonitor.updateInterval = Plasmoid.configuration.updateInterval
     }
 
     Component.onCompleted: {
@@ -41,7 +43,7 @@ Item {
     }
 
     Connections {
-        target: plasmoid.configuration
+        target: Plasmoid.configuration
         function onUpdateIntervalChanged() {
             updateConfig()
         }

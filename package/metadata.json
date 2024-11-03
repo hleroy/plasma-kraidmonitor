@@ -1,0 +1,21 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "hleroy@hleroy.com",
+                "Name": "Hervé Le Roy"
+            }
+        ],
+        "Category": "System Information",
+        "Description": "Monitor RAID array status",
+        "Icon": "drive-harddisk",
+        "Id": "org.kde.plasma.kraidmonitor",
+        "License": "CC0-1.0",
+        "Name": "RAID Monitor",
+        "Version": "0.2",
+        "Website": "https://github.com/hleroy/plasma-kraidmonitor"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-API": "declarativeappletscript",
+    "X-Plasma-MainScript": "ui/main.qml"
+}

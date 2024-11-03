@@ -1,17 +1,20 @@
 #include "kraidmonitor.h"
 #include <QDir>
 #include <QFile>
-#include <QtQml>
+#include <QQmlExtensionPlugin>
+#include <QTimer>
+#include <QQmlEngine>
+
 
 KRaidMonitor::KRaidMonitor(QObject *parent)
     : QObject(parent)
     , m_timer(new QTimer(this))
     , m_icon(QStringLiteral("drive-harddisk"))
     , m_status(QStringLiteral("Unknown"))
-    , m_updateInterval(3000)
+    , m_updateInterval(3) // Set in seconds if multiplied in setUpdateInterval
 {
     connect(m_timer, &QTimer::timeout, this, &KRaidMonitor::updateArrayStatus);
-    m_timer->start(m_updateInterval);
+    m_timer->start(m_updateInterval * 1000); // Convert to ms for the timer
     updateAvailableArrays();
 }
 
@@ -30,7 +33,7 @@ void KRaidMonitor::setUpdateInterval(int interval)
 {
     if (m_updateInterval != interval) {
         m_updateInterval = interval;
-        m_timer->setInterval(interval * 1000);
+        m_timer->setInterval(interval * 1000); // Set interval in ms
         Q_EMIT updateIntervalChanged();
     }
 }
@@ -76,7 +79,6 @@ void KRaidMonitor::updateArrayStatus()
     Q_EMIT statusChanged();
     Q_EMIT iconChanged();
 }
-
 
 void KRaidMonitor::updateAvailableArrays()
 {

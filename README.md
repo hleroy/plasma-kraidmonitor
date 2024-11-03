@@ -13,18 +13,18 @@ KRaidMonitor is a KDE Plasma widget that monitors the status of RAID arrays on y
 
 ## Requirements
 
-- KDE Plasma 5.15 or higher
-- Qt 5.15 or higher
-- KDE Frameworks 5.70 or higher
+- KDE Plasma 6 or higher
+- Qt 6.5 or higher
+- KDE Frameworks 6 or higher
 - CMake 3.16 or higher
 - Extra CMake Modules (ECM)
 
 ## Building and Installing
 
-1. Make sure you have the required dependencies installed. On Ubuntu or Debian-based systems, you can install them with:
-   `sudo apt install cmake extra-cmake-modules qtbase5-dev libkf5plasma-dev libkf5i18n-dev libkf5service-dev libkf5package-dev libkf5declarative-dev`
+1. Make sure you have the required dependencies installed. On Kubuntu, you can install them with:
+   `sudo apt install cmake extra-cmake-modules plasma-sdk qt6-base-dev qt6-declarative-dev qt6-tools-dev libplasma-dev libkf6i18n-dev libkf6service-dev libkf6package-dev plasma-workspace-dev qt6-base-private-dev qt6-declarative-private-dev`
 
-2. Clone the repository: `git clone https://github.com/yourusername/kraidmonitor.git cd kraidmonitor`
+2. Clone the repository: `git clone https://github.com/hleroy/kraidmonitor.git cd kraidmonitor`
 
 3. Create a build directory and run CMake:
    `mkdir build cd build cmake ..`
@@ -33,7 +33,7 @@ KRaidMonitor is a KDE Plasma widget that monitors the status of RAID arrays on y
 
 5. Install the plasmoid: `sudo make install`
 
-6. Restart the Plasma shell: `kquitapp5 plasmashell && kstart5 plasmashell`
+6. Restart the Plasma shell: `kquitapp6 plasmashell && kstart plasmashell`
 
 ## Usage
 
@@ -48,8 +48,8 @@ KRaidMonitor is a KDE Plasma widget that monitors the status of RAID arrays on y
 
 ## Troubleshooting
 
-If the widget doesn't show up after installation, try running: `kpackagetool5 -l | grep raidmonitor`
-If the output is empty, manually install the package: `kpackagetool5 -t Plasma/Applet -i package/`
+To see errors in the console, use the plasmoid viewer (launched from the root of the repo):
+`plasmoidviewer -a package`
 
 ## Contributing
 

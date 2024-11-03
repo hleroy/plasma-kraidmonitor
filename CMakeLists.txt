@@ -2,29 +2,29 @@ cmake_minimum_required(VERSION 3.16)
 
 project(plasma-kraidmonitor)
 
-set(QT_MIN_VERSION "5.15.0")
-set(KF5_MIN_VERSION "5.92.0")
+# Make sure we're using Qt6
+set(QT_MAJOR_VERSION 6)
+set(QT_MIN_VERSION "6.5.0")
 
-find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
+find_package(ECM 1.4.0 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 
-find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
+# Find Qt6 packages first
+find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
     Core
-    Gui
     Qml
-    Quick
 )
 
-find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS
-    Plasma
+# Then find Plasma
+find_package(Plasma REQUIRED)
+
+# Find KF6
+find_package(KF6 REQUIRED COMPONENTS
     I18n
-    Service
-    Package
-    Declarative
 )
 
 set(kraidmonitor_SRCS
@@ -34,10 +34,9 @@ set(kraidmonitor_SRCS
 add_library(kraidmonitorplugin SHARED ${kraidmonitor_SRCS})
 
 target_link_libraries(kraidmonitorplugin
-    Qt5::Core
-    Qt5::Qml
-    KF5::Plasma
-    KF5::I18n
+    Qt6::Core
+    Qt6::Qml
+    KF6::I18n
 )
 
 install(TARGETS kraidmonitorplugin DESTINATION ${KDE_INSTALL_QMLDIR}/org/kde/plasma/private/kraidmonitor)

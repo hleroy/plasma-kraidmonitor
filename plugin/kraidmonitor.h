@@ -3,7 +3,6 @@
 #include <QObject>
 #include <QTimer>
 #include <QVariantList>
-#include <Plasma/Applet>
 
 class KRaidMonitor : public QObject
 {
