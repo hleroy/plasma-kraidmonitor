@@ -20,6 +20,8 @@ PlasmoidItem {
 
         PlasmaComponents.Label {
             Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: parent.parent.width
+            elide: Text.ElideRight
             text: kraidMonitor.selectedArray + ": " + kraidMonitor.status
         }
     }
