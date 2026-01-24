@@ -11,6 +11,8 @@ PlasmoidItem {
     id: root
 
     fullRepresentation: ColumnLayout {
+        id: container
+
         Kirigami.Icon {
             Layout.alignment: Qt.AlignHCenter
             source: kraidMonitor.icon
@@ -20,6 +22,8 @@ PlasmoidItem {
 
         PlasmaComponents.Label {
             Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: container.width
+            elide: Text.ElideRight
             text: kraidMonitor.selectedArray + ": " + kraidMonitor.status
         }
     }
