@@ -19,21 +19,63 @@ KRaidMonitor is a KDE Plasma widget that monitors the status of RAID arrays on y
 - CMake 3.16 or higher
 - Extra CMake Modules (ECM)
 
-## Building and Installing
+## Installation
 
-1. Make sure you have the required dependencies installed. On Kubuntu, you can install them with:
-   `sudo apt install cmake extra-cmake-modules plasma-sdk qt6-base-dev qt6-declarative-dev qt6-tools-dev libplasma-dev libkf6i18n-dev libkf6service-dev libkf6package-dev plasma-workspace-dev qt6-base-private-dev qt6-declarative-private-dev`
+### Option 1: Install from Debian Package (Recommended)
 
-2. Clone the repository: `git clone https://github.com/hleroy/kraidmonitor.git cd kraidmonitor`
+1. Download the latest `.deb` package from the releases page
+
+2. Install the package:
+
+   ```bash
+   sudo dpkg -i plasma-kraidmonitor_*.deb
+   sudo apt-get install -f  # Install any missing dependencies
+   ```
+
+3. Restart the Plasma shell:
+   ```bash
+   kquitapp6 plasmashell && kstart plasmashell
+   ```
+
+### Option 2: Build and Install from Source
+
+1. Make sure you have the required dependencies installed. On Debian/Ubuntu, you can install them with:
+
+   ```bash
+   sudo apt install cmake extra-cmake-modules plasma-sdk qt6-base-dev qt6-declarative-dev qt6-tools-dev libplasma-dev libkf6i18n-dev libkf6service-dev libkf6package-dev plasma-workspace-dev qt6-base-private-dev qt6-declarative-private-dev
+   ```
+
+2. Clone the repository:
+
+   ```bash
+   git clone https://github.com/hleroy/plasma-kraidmonitor.git
+   cd plasma-kraidmonitor
+   ```
 
 3. Create a build directory and run CMake:
-   `mkdir build cd build cmake ..`
 
-4. Build the plasmoid: `make`
+   ```bash
+   mkdir build
+   cd build
+   cmake ..
+   ```
 
-5. Install the plasmoid: `sudo make install`
+4. Build the plasmoid:
 
-6. Restart the Plasma shell: `kquitapp6 plasmashell && kstart plasmashell`
+   ```bash
+   make
+   ```
+
+5. Install the plasmoid:
+
+   ```bash
+   sudo make install
+   ```
+
+6. Restart the Plasma shell:
+   ```bash
+   kquitapp6 plasmashell && kstart plasmashell
+   ```
 
 ## Usage
 
