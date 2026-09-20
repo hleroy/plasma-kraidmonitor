@@ -200,7 +200,7 @@ if [ ! -f "$PLUGIN_LIB" ]; then
     exit 1
 fi
 
-cp "$PLUGIN_LIB" "$USR_DIR/lib/$MULTIARCH/qt6/qml/org/kde/plasma/private/kraidmonitor/"
+install -m 755 "$PLUGIN_LIB" "$USR_DIR/lib/$MULTIARCH/qt6/qml/org/kde/plasma/private/kraidmonitor/"
 print_info "Copied plugin library"
 
 # Copy qmldir
@@ -209,7 +209,7 @@ if [ ! -f "plugin/qmldir" ]; then
     exit 1
 fi
 
-cp "plugin/qmldir" "$USR_DIR/lib/$MULTIARCH/qt6/qml/org/kde/plasma/private/kraidmonitor/"
+install -m 644 "plugin/qmldir" "$USR_DIR/lib/$MULTIARCH/qt6/qml/org/kde/plasma/private/kraidmonitor/"
 print_info "Copied qmldir"
 
 # Copy plasmoid package
@@ -220,6 +220,13 @@ fi
 
 cp -r package/* "$USR_DIR/share/plasma/plasmoids/org.kde.plasma.$PACKAGE_NAME/"
 print_info "Copied plasmoid package"
+
+# Normalize permissions: cp preserves the working tree's modes, and anything not
+# world-readable makes Plasma report the package as non-existent once installed.
+find "$USR_DIR" -type d -exec chmod 755 {} +
+find "$USR_DIR" -type f ! -name '*.so' -exec chmod 644 {} +
+find "$USR_DIR" -type f -name '*.so' -exec chmod 755 {} +
+print_info "Normalized file permissions"
 
 print_step "Generating DEBIAN/control file"
 
