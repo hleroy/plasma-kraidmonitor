@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Document both plasmoidviewer invocations in the README: a source-tree path to
+  test uncommitted changes, and the plugin id to test the installed copy.
+
 ### Fixed
 
 - Install the packaged files world-readable. `build-deb.sh` copied the plugin and

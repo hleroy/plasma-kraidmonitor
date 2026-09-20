@@ -90,8 +90,19 @@ KRaidMonitor is a KDE Plasma widget that monitors the status of RAID arrays on y
 
 ## Troubleshooting
 
-To see errors in the console, use the plasmoid viewer (launched from the root of the repo):
-`plasmoidviewer -a package`
+To see errors in the console, use the plasmoid viewer. Run it from the root of the
+repo to load the widget straight from the source tree, without installing it:
+
+```bash
+plasmoidviewer -a ./package
+```
+
+To check the *installed* copy instead, pass the plugin id — useful when the widget
+works from source but fails after installation:
+
+```bash
+plasmoidviewer -a org.kde.plasma.kraidmonitor
+```
 
 ## Contributing
 
