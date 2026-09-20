@@ -221,6 +221,18 @@ fi
 cp -r package/* "$USR_DIR/share/plasma/plasmoids/org.kde.plasma.$PACKAGE_NAME/"
 print_info "Copied plasmoid package"
 
+# Copy the compiled translation catalogs. Staging here is manual rather than a
+# `make install`, so anything the CMake install rules add must be mirrored or it
+# silently goes missing from the .deb.
+LOCALE_DIR="build/locale"
+if [ -d "$LOCALE_DIR" ]; then
+    mkdir -p "$USR_DIR/share/locale"
+    cp -r "$LOCALE_DIR"/* "$USR_DIR/share/locale/"
+    print_info "Copied $(find "$LOCALE_DIR" -name '*.mo' | wc -l) translation catalog(s)"
+else
+    print_warning "No compiled translations found in $LOCALE_DIR"
+fi
+
 # Normalize permissions: cp preserves the working tree's modes, and anything not
 # world-readable makes Plasma report the package as non-existent once installed.
 find "$USR_DIR" -type d -exec chmod 755 {} +

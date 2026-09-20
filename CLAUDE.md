@@ -53,9 +53,14 @@ never `mdadm`, so no elevated privileges are needed:
 - Status: every attribute is read through `readAttr()`, which resolves
   `/sys/block/<selectedArray>/md/<attr>` and returns a null string when the read
   fails. `updateArrayStatus()` derives a `state` enum (`NoArray`/`Ok`/`Syncing`/
-  `Degraded`/`Error`) plus a `status` display string from `array_state`,
-  `sync_action` and `degraded`, and fills `level`, `totalDisks`, `activeDisks`,
-  `syncProgress`, `syncSpeed` and `syncEtaSeconds`.
+  `Degraded`/`Error`) from `array_state`, `sync_action` and `degraded`, and fills
+  `rawState`, `level`, `totalDisks`, `activeDisks`, `syncProgress`, `syncSpeed`,
+  `syncEtaSeconds` and `members` (one `{ name, state, slot }` map per `dev-*`).
+
+The plugin exposes **no display strings**. It reports the state and the raw
+`array_state` behind it; every visible string is built in `main.qml` so it goes
+through `i18n()`. Adding a user-visible string in C++ would make it
+untranslatable — put it in QML instead.
 
 Two ordering rules in `updateArrayStatus()` are deliberate and easy to break:
 
@@ -70,8 +75,10 @@ Every property emits its change signal only when the value actually changed;
 `updateArrayStatus()` runs on a timer, so emitting unconditionally would
 re-evaluate every QML binding on every tick.
 
-The QML side is a thin view: `main.qml` binds to `state`/`status`/`level`/the
-disk counts/the sync properties and owns nothing else beyond formatting.
+The QML side is a thin view: `main.qml` binds to `state`/`rawState`/`level`/the
+disk counts/the sync properties/`members`, and owns nothing else beyond
+formatting. `StatusIcon.qml` holds the icon-plus-emblem so the compact and full
+representations cannot drift apart.
 
 Icon names are **freedesktop theme names**, not the SVGs in
 `package/contents/icons/`. Those three `raid*.svg` files are installed by
@@ -90,17 +97,56 @@ emblem (`emblem-ok-symbolic`, `emblem-synchronizing-symbolic`, `emblem-warning`,
 ### Configuration
 
 `package/contents/config/main.xml` declares `updateInterval` and `selectedArray`,
-but the two are wired differently, which is easy to misread as a bug in the wrong
-place: `updateInterval` round-trips through `configGeneral.qml`'s
-`cfg_updateInterval` alias and is pushed to the plugin by `main.qml`'s
-`updateConfig()`. `selectedArray` is **never** read back from config — `main.qml`
-picks `availableArrays[0]` on every load, and no config UI exposes it.
+and the two are wired differently. `updateInterval` round-trips through
+`configGeneral.qml`'s `cfg_updateInterval` alias and is pushed to the plugin by
+`main.qml`'s `updateConfig()`. `selectedArray` cannot use an alias, because
+`ComboBox.currentValue` is read-only: the page declares a plain
+`property string cfg_selectedArray`, writes it in `onActivated`, and *binds*
+`currentIndex` back to `indexOfValue(cfg_selectedArray)`. Do not convert that
+binding into a `Component.onCompleted` assignment — Plasma populates the `cfg_`
+properties after the page is constructed, so a one-shot lookup can run against an
+empty value and silently select the wrong array.
+
+`main.qml`'s `selectConfiguredArray()` falls back to `availableArrays[0]` when the
+configured array is absent, but deliberately does **not** write that fallback
+back to the config, so a temporarily missing array does not discard the setting.
+
+The config page instantiates its own `KRaidMonitor` purely to enumerate
+`availableArrays`; it therefore runs a second poll timer while the dialog is open.
+
+### Translations
+
+Visible strings live in QML and are extracted by `Messages.sh` into
+`po/<lang>/plasma_applet_org.kde.plasma.kraidmonitor.po`. The domain name is not
+free-form: Plasma resolves an applet's `i18n()` against
+`plasma_applet_<KPlugin.Id>`, so the `.po` basename must track the plugin id if
+that ever changes. `ki18n_install(po)` compiles the catalogs into `build/locale/`
+during a normal `make` and installs them under `share/locale/`.
+
+Re-extract after touching any string:
+
+```bash
+xgettext --from-code=UTF-8 -C --kde -ci18n \
+    -ki18n:1 -ki18nc:1c,2 -ki18np:1,2 -ki18ncp:1c,2,3 \
+    $(find package -name '*.qml') \
+    -o po/plasma_applet_org.kde.plasma.kraidmonitor.pot
+msgmerge -U po/fr/plasma_applet_org.kde.plasma.kraidmonitor.po \
+    po/plasma_applet_org.kde.plasma.kraidmonitor.pot
+```
+
+Note `ki18n_install` silently does nothing when `po/` is missing, so a broken
+catalog path fails by shipping English rather than by failing the build.
 
 ## Packaging
 
 `package/metadata.json`'s `KPlugin.Version` is the single source of truth for the
 version; `build-deb.sh` extracts it with `jq`, along with the package id, author
 and homepage, to generate `DEBIAN/control`. Bump it there, then rebuild.
+
+`build-deb.sh` never runs `make install` — it stages the plugin, `qmldir`, the
+package directory and `build/locale/` by hand. Anything new that the CMake install
+rules place on disk has to be mirrored into that staging block or it silently goes
+missing from the `.deb` while working fine from a source install.
 
 `build-deb.sh` stages files, then normalizes the staging tree to 755/644 before
 calling `dpkg-deb`. Do not remove that step or go back to bare `cp` for the plugin

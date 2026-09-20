@@ -12,7 +12,7 @@
         "Id": "org.kde.plasma.kraidmonitor",
         "License": "CC0-1.0",
         "Name": "RAID Monitor",
-        "Version": "0.2",
+        "Version": "0.3",
         "Website": "https://github.com/hleroy/plasma-kraidmonitor"
     },
     "X-Plasma-API-Minimum-Version": "6.0",

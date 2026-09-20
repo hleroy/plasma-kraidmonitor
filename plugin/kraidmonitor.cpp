@@ -4,6 +4,7 @@
 #include <QQmlExtensionPlugin>
 #include <QTimer>
 #include <QQmlEngine>
+#include <algorithm>
 
 
 // "raid1" -> "RAID1", "linear" -> "Linear".
@@ -24,7 +25,7 @@ KRaidMonitor::KRaidMonitor(QObject *parent)
     : QObject(parent)
     , m_timer(new QTimer(this))
     , m_state(NoArray)
-    , m_status(QStringLiteral("Unknown"))
+    , m_rawState()
     , m_totalDisks(0)
     , m_activeDisks(0)
     , m_syncProgress(-1)
@@ -72,6 +73,10 @@ QString KRaidMonitor::readAttr(const QString &attr) const
 
 void KRaidMonitor::clearArrayDetails()
 {
+    if (!m_members.isEmpty()) {
+        m_members.clear();
+        Q_EMIT membersChanged();
+    }
     if (!m_level.isEmpty()) {
         m_level.clear();
         Q_EMIT levelChanged();
@@ -105,10 +110,9 @@ void KRaidMonitor::updateArrayStatus()
             m_state = NoArray;
             Q_EMIT stateChanged();
         }
-        const QString status = QStringLiteral("No array selected");
-        if (m_status != status) {
-            m_status = status;
-            Q_EMIT statusChanged();
+        if (!m_rawState.isEmpty()) {
+            m_rawState.clear();
+            Q_EMIT rawStateChanged();
         }
         clearArrayDetails();
         return;
@@ -119,38 +123,34 @@ void KRaidMonitor::updateArrayStatus()
     const int degraded = readAttr(QStringLiteral("degraded")).toInt();
 
     State state;
-    QString status;
 
     if (arrayState.isEmpty()) {
         state = Error;
-        status = QStringLiteral("Error: Cannot read array state");
     } else if (syncAction == QLatin1String("check") || syncAction == QLatin1String("repair")
                || syncAction == QLatin1String("resync") || syncAction == QLatin1String("recover")
                || syncAction == QLatin1String("reshape")) {
         // Checked before the array state: a rebuilding array still reports
         // clean or active, and the sync is the more useful thing to show.
         state = Syncing;
-        status = QStringLiteral("Syncing");
     } else if (arrayState != QLatin1String("clean") && arrayState != QLatin1String("active")) {
         state = Error;
-        status = QStringLiteral("Error: ") + arrayState;
     } else if (degraded > 0) {
         // A failed member normally leaves array_state at clean, so the disk
         // count is what distinguishes a degraded array from a healthy one.
         state = Degraded;
-        status = QStringLiteral("Degraded");
     } else {
         state = Ok;
-        status = QStringLiteral("OK");
     }
 
     if (m_state != state) {
         m_state = state;
         Q_EMIT stateChanged();
     }
-    if (m_status != status) {
-        m_status = status;
-        Q_EMIT statusChanged();
+    // Display strings are built in QML so they go through i18n(); the plugin
+    // only reports the state and the raw value behind it.
+    if (m_rawState != arrayState) {
+        m_rawState = arrayState;
+        Q_EMIT rawStateChanged();
     }
 
     const QString level = formatLevel(readAttr(QStringLiteral("level")));
@@ -208,6 +208,36 @@ void KRaidMonitor::updateArrayStatus()
     if (m_syncEtaSeconds != eta) {
         m_syncEtaSeconds = eta;
         Q_EMIT syncEtaSecondsChanged();
+    }
+
+    // Each member device is a dev-<name> directory holding its own state and
+    // slot, which is what tells you *which* disk dropped out of the array.
+    QVariantList members;
+    QDir arrayDir(QStringLiteral("/sys/block/%1/md").arg(m_selectedArray));
+    const QStringList memberDirs = arrayDir.entryList(QStringList() << QStringLiteral("dev-*"), QDir::Dirs);
+    for (const QString &memberDir : memberDirs) {
+        bool slotOk = false;
+        const int slot = readAttr(memberDir + QStringLiteral("/slot")).toInt(&slotOk);
+        members.append(QVariantMap{
+            {QStringLiteral("name"), memberDir.mid(4)},
+            {QStringLiteral("state"), readAttr(memberDir + QStringLiteral("/state"))},
+            {QStringLiteral("slot"), slotOk ? slot : -1},
+        });
+    }
+    std::sort(members.begin(), members.end(), [](const QVariant &a, const QVariant &b) {
+        const QVariantMap left = a.toMap();
+        const QVariantMap right = b.toMap();
+        // Spares report no slot; keep them after the numbered members.
+        const int leftSlot = left[QStringLiteral("slot")].toInt();
+        const int rightSlot = right[QStringLiteral("slot")].toInt();
+        if (leftSlot != rightSlot) {
+            return (leftSlot < 0) ? false : (rightSlot < 0) ? true : leftSlot < rightSlot;
+        }
+        return left[QStringLiteral("name")].toString() < right[QStringLiteral("name")].toString();
+    });
+    if (m_members != members) {
+        m_members = members;
+        Q_EMIT membersChanged();
     }
 }
 
