@@ -242,7 +242,7 @@ Priority: optional
 Architecture: $ARCH
 Maintainer: $AUTHOR_NAME <$AUTHOR_EMAIL>
 Installed-Size: $INSTALLED_SIZE
-Depends: plasma-workspace, qml6-module-qtquick
+Depends: plasma-workspace, qml6-module-qtquick, qml6-module-org-kde-coreaddons
 Description: $DESCRIPTION
  KRaidMonitor is a KDE Plasma widget that monitors the status of RAID
  arrays on your system. It provides a quick and easy way to check the

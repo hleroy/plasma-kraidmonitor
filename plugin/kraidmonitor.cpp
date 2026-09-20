@@ -6,11 +6,30 @@
 #include <QQmlEngine>
 
 
+// "raid1" -> "RAID1", "linear" -> "Linear".
+static QString formatLevel(const QString &raw)
+{
+    if (raw.isEmpty()) {
+        return QString();
+    }
+    if (raw.startsWith(QLatin1String("raid"))) {
+        return QLatin1String("RAID") + raw.mid(4);
+    }
+    QString formatted = raw;
+    formatted[0] = formatted[0].toUpper();
+    return formatted;
+}
+
 KRaidMonitor::KRaidMonitor(QObject *parent)
     : QObject(parent)
     , m_timer(new QTimer(this))
-    , m_icon(QStringLiteral("drive-harddisk"))
+    , m_state(NoArray)
     , m_status(QStringLiteral("Unknown"))
+    , m_totalDisks(0)
+    , m_activeDisks(0)
+    , m_syncProgress(-1)
+    , m_syncSpeed(-1)
+    , m_syncEtaSeconds(-1)
     , m_updateInterval(3) // Set in seconds if multiplied in setUpdateInterval
 {
     connect(m_timer, &QTimer::timeout, this, &KRaidMonitor::updateArrayStatus);
@@ -38,46 +57,158 @@ void KRaidMonitor::setUpdateInterval(int interval)
     }
 }
 
+QString KRaidMonitor::readAttr(const QString &attr) const
+{
+    if (m_selectedArray.isEmpty()) {
+        return QString();
+    }
+
+    QFile file(QStringLiteral("/sys/block/%1/md/%2").arg(m_selectedArray, attr));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return QString();
+    }
+    return QString::fromUtf8(file.readAll()).trimmed();
+}
+
+void KRaidMonitor::clearArrayDetails()
+{
+    if (!m_level.isEmpty()) {
+        m_level.clear();
+        Q_EMIT levelChanged();
+    }
+    if (m_totalDisks != 0) {
+        m_totalDisks = 0;
+        Q_EMIT totalDisksChanged();
+    }
+    if (m_activeDisks != 0) {
+        m_activeDisks = 0;
+        Q_EMIT activeDisksChanged();
+    }
+    if (m_syncProgress != -1) {
+        m_syncProgress = -1;
+        Q_EMIT syncProgressChanged();
+    }
+    if (m_syncSpeed != -1) {
+        m_syncSpeed = -1;
+        Q_EMIT syncSpeedChanged();
+    }
+    if (m_syncEtaSeconds != -1) {
+        m_syncEtaSeconds = -1;
+        Q_EMIT syncEtaSecondsChanged();
+    }
+}
+
 void KRaidMonitor::updateArrayStatus()
 {
     if (m_selectedArray.isEmpty()) {
-        m_status = QStringLiteral("No array selected");
-        m_icon = QStringLiteral("drive-harddisk");
-        Q_EMIT statusChanged();
-        Q_EMIT iconChanged();
+        if (m_state != NoArray) {
+            m_state = NoArray;
+            Q_EMIT stateChanged();
+        }
+        const QString status = QStringLiteral("No array selected");
+        if (m_status != status) {
+            m_status = status;
+            Q_EMIT statusChanged();
+        }
+        clearArrayDetails();
         return;
     }
 
-    QString statePath = QStringLiteral("/sys/block/%1/md/array_state").arg(m_selectedArray);
-    QString syncActionPath = QStringLiteral("/sys/block/%1/md/sync_action").arg(m_selectedArray);
+    const QString arrayState = readAttr(QStringLiteral("array_state"));
+    const QString syncAction = readAttr(QStringLiteral("sync_action"));
+    const int degraded = readAttr(QStringLiteral("degraded")).toInt();
 
-    QFile stateFile(statePath);
-    QFile syncActionFile(syncActionPath);
+    State state;
+    QString status;
 
-    if (stateFile.open(QIODevice::ReadOnly) && syncActionFile.open(QIODevice::ReadOnly)) {
-        QString state = QString::fromUtf8(stateFile.readAll()).trimmed();
-        QString syncAction = QString::fromUtf8(syncActionFile.readAll()).trimmed();
-
-        if (syncAction == QLatin1String("check") || syncAction == QLatin1String("repair") || syncAction == QLatin1String("resync")) {
-            m_status = QStringLiteral("Syncing");
-            m_icon = QStringLiteral("drive-harddisk-updating");
-        } else if (state == QLatin1String("clean") || state == QLatin1String("active")) {
-            m_status = QStringLiteral("OK");
-            m_icon = QStringLiteral("drive-harddisk");
-        } else if (state == QLatin1String("degraded")) {
-            m_status = QStringLiteral("Degraded");
-            m_icon = QStringLiteral("drive-harddisk-warning");
-        } else {
-            m_status = QStringLiteral("Error: ") + state;
-            m_icon = QStringLiteral("drive-harddisk-error");
-        }
+    if (arrayState.isEmpty()) {
+        state = Error;
+        status = QStringLiteral("Error: Cannot read array state");
+    } else if (syncAction == QLatin1String("check") || syncAction == QLatin1String("repair")
+               || syncAction == QLatin1String("resync") || syncAction == QLatin1String("recover")
+               || syncAction == QLatin1String("reshape")) {
+        // Checked before the array state: a rebuilding array still reports
+        // clean or active, and the sync is the more useful thing to show.
+        state = Syncing;
+        status = QStringLiteral("Syncing");
+    } else if (arrayState != QLatin1String("clean") && arrayState != QLatin1String("active")) {
+        state = Error;
+        status = QStringLiteral("Error: ") + arrayState;
+    } else if (degraded > 0) {
+        // A failed member normally leaves array_state at clean, so the disk
+        // count is what distinguishes a degraded array from a healthy one.
+        state = Degraded;
+        status = QStringLiteral("Degraded");
     } else {
-        m_status = QStringLiteral("Error: Cannot read array state");
-        m_icon = QStringLiteral("drive-harddisk-error");
+        state = Ok;
+        status = QStringLiteral("OK");
     }
 
-    Q_EMIT statusChanged();
-    Q_EMIT iconChanged();
+    if (m_state != state) {
+        m_state = state;
+        Q_EMIT stateChanged();
+    }
+    if (m_status != status) {
+        m_status = status;
+        Q_EMIT statusChanged();
+    }
+
+    const QString level = formatLevel(readAttr(QStringLiteral("level")));
+    if (m_level != level) {
+        m_level = level;
+        Q_EMIT levelChanged();
+    }
+
+    const int totalDisks = readAttr(QStringLiteral("raid_disks")).toInt();
+    const int activeDisks = qMax(0, totalDisks - degraded);
+    if (m_totalDisks != totalDisks) {
+        m_totalDisks = totalDisks;
+        Q_EMIT totalDisksChanged();
+    }
+    if (m_activeDisks != activeDisks) {
+        m_activeDisks = activeDisks;
+        Q_EMIT activeDisksChanged();
+    }
+
+    // sync_completed reads "<done> / <total>" in sectors while a sync runs,
+    // and "none" or "delayed" otherwise.
+    qreal syncProgress = -1;
+    qreal remainingSectors = -1;
+    const QString syncCompleted = readAttr(QStringLiteral("sync_completed"));
+    const QStringList parts = syncCompleted.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    if (parts.count() == 2) {
+        bool doneOk = false;
+        bool totalOk = false;
+        const qreal done = parts.at(0).trimmed().toDouble(&doneOk);
+        const qreal total = parts.at(1).trimmed().toDouble(&totalOk);
+        if (doneOk && totalOk && total > 0) {
+            syncProgress = qBound(qreal(0), done / total, qreal(1));
+            remainingSectors = qMax(qreal(0), total - done);
+        }
+    }
+    if (m_syncProgress != syncProgress) {
+        m_syncProgress = syncProgress;
+        Q_EMIT syncProgressChanged();
+    }
+
+    // sync_speed is in KB/s, or "none" when idle.
+    bool speedOk = false;
+    const int syncSpeed = readAttr(QStringLiteral("sync_speed")).toInt(&speedOk);
+    const int speed = (speedOk && syncSpeed > 0) ? syncSpeed : -1;
+    if (m_syncSpeed != speed) {
+        m_syncSpeed = speed;
+        Q_EMIT syncSpeedChanged();
+    }
+
+    // Sectors are 512 bytes, so two of them make up one KB of sync_speed.
+    int eta = -1;
+    if (speed > 0 && remainingSectors >= 0) {
+        eta = static_cast<int>(remainingSectors / 2 / speed);
+    }
+    if (m_syncEtaSeconds != eta) {
+        m_syncEtaSeconds = eta;
+        Q_EMIT syncEtaSecondsChanged();
+    }
 }
 
 void KRaidMonitor::updateAvailableArrays()

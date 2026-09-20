@@ -50,17 +50,42 @@ All RAID monitoring is in `plugin/kraidmonitor.cpp`. It reads sysfs directly —
 never `mdadm`, so no elevated privileges are needed:
 
 - Array discovery: `md*` entries under `/sys/block/` (`updateAvailableArrays()`).
-- Status: `/sys/block/<md>/md/array_state` and `.../sync_action`, mapped to a
-  `status` string and an `icon` name in `updateArrayStatus()`. `sync_action` is
-  checked first, so a syncing array reports Syncing regardless of its state.
+- Status: every attribute is read through `readAttr()`, which resolves
+  `/sys/block/<selectedArray>/md/<attr>` and returns a null string when the read
+  fails. `updateArrayStatus()` derives a `state` enum (`NoArray`/`Ok`/`Syncing`/
+  `Degraded`/`Error`) plus a `status` display string from `array_state`,
+  `sync_action` and `degraded`, and fills `level`, `totalDisks`, `activeDisks`,
+  `syncProgress`, `syncSpeed` and `syncEtaSeconds`.
 
-The QML side is a thin view: `main.qml` binds a `Kirigami.Icon` and a label to the
-`icon`/`status`/`selectedArray` properties and owns nothing else.
+Two ordering rules in `updateArrayStatus()` are deliberate and easy to break:
 
-Icon names are **freedesktop theme names** (`drive-harddisk`, `-updating`,
-`-warning`, `-error`), not the SVGs in `package/contents/icons/`. Those three
-`raid*.svg` files are installed by `CMakeLists.txt` but referenced by nothing —
-leftovers from the Plasma 5 version.
+- `sync_action` is checked **before** `array_state`, so a syncing array reports
+  Syncing regardless of its state. The match must include `recover` (rebuilding
+  onto a replacement disk) and `reshape`, not just `check`/`repair`/`resync`.
+- Degraded is decided by `degraded > 0`, **not** by `array_state == "degraded"`.
+  A real array with a failed member reports `array_state = clean`, so keying off
+  the state alone reports a dead disk as OK.
+
+Every property emits its change signal only when the value actually changed;
+`updateArrayStatus()` runs on a timer, so emitting unconditionally would
+re-evaluate every QML binding on every tick.
+
+The QML side is a thin view: `main.qml` binds to `state`/`status`/`level`/the
+disk counts/the sync properties and owns nothing else beyond formatting.
+
+Icon names are **freedesktop theme names**, not the SVGs in
+`package/contents/icons/`. Those three `raid*.svg` files are installed by
+`CMakeLists.txt` but referenced by nothing — leftovers from the Plasma 5 version.
+Note that Breeze ships **no** `drive-harddisk-updating`, `-warning` or `-error`;
+earlier versions named them anyway and rendered nothing whenever the array was
+not healthy. State is now signalled by a `drive-harddisk` base icon with an
+emblem (`emblem-ok-symbolic`, `emblem-synchronizing-symbolic`, `emblem-warning`,
+`emblem-error`) drawn over its corner in `main.qml`. Verify any icon name against
+`/usr/share/icons` before using it.
+
+`main.qml` imports `org.kde.coreaddons` for `Format.formatByteSize` and
+`Format.formatSpelloutDuration` (localized sync speed and ETA), which is why
+`build-deb.sh` lists `qml6-module-org-kde-coreaddons` in `Depends`.
 
 ### Configuration
 
