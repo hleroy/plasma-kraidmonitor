@@ -1,0 +1,38 @@
+{
+  "ok": {
+    "STATE": "KRaidMonitor.Ok",
+    "RAW_STATE": "clean",
+    "LEVEL": "RAID1",
+    "TOTAL_DISKS": 2,
+    "ACTIVE_DISKS": 2,
+    "SYNC_PROGRESS": -1,
+    "SYNC_SPEED": -1,
+    "SYNC_ETA": -1,
+    "ARRAY": "md127",
+    "MEMBERS": "[{ \"name\": \"sdb\", \"state\": \"in_sync\", \"slot\": 0 }, { \"name\": \"sdc\", \"state\": \"in_sync\", \"slot\": 1 }]"
+  },
+  "degraded": {
+    "STATE": "KRaidMonitor.Degraded",
+    "RAW_STATE": "clean",
+    "LEVEL": "RAID1",
+    "TOTAL_DISKS": 2,
+    "ACTIVE_DISKS": 1,
+    "SYNC_PROGRESS": -1,
+    "SYNC_SPEED": -1,
+    "SYNC_ETA": -1,
+    "ARRAY": "md127",
+    "MEMBERS": "[{ \"name\": \"sdb\", \"state\": \"in_sync\", \"slot\": 0 }, { \"name\": \"sdc\", \"state\": \"faulty\", \"slot\": 1 }]"
+  },
+  "syncing": {
+    "STATE": "KRaidMonitor.Syncing",
+    "RAW_STATE": "clean",
+    "LEVEL": "RAID1",
+    "TOTAL_DISKS": 2,
+    "ACTIVE_DISKS": 2,
+    "SYNC_PROGRESS": 0.61,
+    "SYNC_SPEED": 86016,
+    "SYNC_ETA": 738,
+    "ARRAY": "md127",
+    "MEMBERS": "[{ \"name\": \"sdb\", \"state\": \"in_sync\", \"slot\": 0 }, { \"name\": \"sdc\", \"state\": \"spare\", \"slot\": 1 }]"
+  }
+}

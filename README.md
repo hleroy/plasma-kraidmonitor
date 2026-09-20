@@ -4,12 +4,27 @@ KRaidMonitor is a KDE Plasma widget that monitors the status of RAID arrays on y
 
 **Note:** All code in this project was generated using AI assistance as a personal experiment.
 
+## Screenshots
+
+| Healthy | Degraded | Syncing |
+| --- | --- | --- |
+| ![A healthy RAID1 array: md127, RAID1, 2 of 2 disks, OK](screenshots/ok.png) | ![A degraded RAID1 array: md127, RAID1, 1 of 2 disks, Degraded](screenshots/degraded.png) | ![A syncing RAID1 array: md127, RAID1, 2 of 2 disks, 61% complete at 84 MiB/s](screenshots/syncing.png) |
+
+Hovering the widget adds a tooltip naming each member disk and its state, which
+is what identifies *which* disk dropped out of a degraded array.
+
 ## Features
 
 - Automatically detects RAID arrays on your system
 - Displays the current status of the selected RAID array
-- Shows different icons based on the RAID array's state (OK, Syncing, Degraded, Error)
-- Configurable update interval
+- Signals the state with a colour-coded emblem (OK, Syncing, Degraded, Error)
+- Shows the RAID level and the number of working disks
+- Shows progress, transfer rate and an estimated time remaining while an array
+  is rebuilding
+- Lists every member disk and its state in the tooltip
+- Works on the desktop and in a panel
+- Configurable update interval, and a picker when several arrays are present
+- Translated into French; other languages welcome
 
 ## Requirements
 

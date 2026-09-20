@@ -1,2 +1,6 @@
 build
 dist
+
+# Screenshot harness build products
+tools/shotgen/render
+tools/shotgen/mockimports/org/kde/plasma/private/kraidmonitor/KRaidMonitor.qml

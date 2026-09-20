@@ -1,0 +1,25 @@
+import QtQuick
+
+// Stand-in for the C++ plugin, used only to render the documentation
+// screenshots. It exposes the same properties so package/contents/ui/main.qml
+// is rendered unmodified; only the values are scripted instead of read from
+// sysfs, which is what lets a degraded or syncing array be pictured without
+// actually breaking one.
+QtObject {
+    enum State { NoArray, Ok, Syncing, Degraded, Error }
+
+    property int state: @STATE@
+    property string rawState: "@RAW_STATE@"
+    property string level: "@LEVEL@"
+    property int totalDisks: @TOTAL_DISKS@
+    property int activeDisks: @ACTIVE_DISKS@
+    property real syncProgress: @SYNC_PROGRESS@
+    property int syncSpeed: @SYNC_SPEED@
+    property int syncEtaSeconds: @SYNC_ETA@
+    property var members: @MEMBERS@
+    property var availableArrays: [{ "text": "@ARRAY@", "value": "@ARRAY@" }]
+    property string selectedArray: "@ARRAY@"
+    property int updateInterval: 3
+
+    function updateAvailableArrays() {}
+}

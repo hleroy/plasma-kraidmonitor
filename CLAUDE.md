@@ -114,6 +114,31 @@ back to the config, so a temporarily missing array does not discard the setting.
 The config page instantiates its own `KRaidMonitor` purely to enumerate
 `availableArrays`; it therefore runs a second poll timer while the dialog is open.
 
+### Screenshots
+
+`screenshots/*.png` are generated, not captured — regenerate with
+`./tools/shotgen/run.sh` after any change to the widget's appearance. The script
+renders `package/contents/ui/main.qml` itself, so the images cannot drift from
+the real QML; only the data source is swapped. Two stub QML modules shadow the
+real ones via `QML2_IMPORT_PATH`:
+
+- `tools/shotgen/mockimports` replaces the C++ plugin with a `KRaidMonitor`
+  whose values come from `states.json`, which is what lets a degraded or syncing
+  array be pictured without breaking one.
+- `tools/shotgen/plasmoidstub` replaces `PlasmoidItem` and `Plasmoid`, so
+  `main.qml` loads outside a running shell.
+
+Keep those two roots separate. Putting the `PlasmoidItem` stub on the import path
+used with `plasmoidviewer` breaks the viewer's own containment, which needs the
+real `org.kde.plasma.plasmoid`.
+
+The render runs under Xephyr rather than `QT_QPA_PLATFORM=offscreen`: offscreen
+loads no KDE platform theme, and Kirigami then ignores `isMask`/`color`, so the
+OK and syncing emblems come out grey instead of green and orange. The script also
+forces `LC_ALL=C.UTF-8 LANGUAGE=en`, because the plasmoid's own catalog is not
+loaded outside a real applet while KCoreAddons' is — without it the rate and
+duration come out French inside otherwise English text.
+
 ### Translations
 
 Visible strings live in QML and are extracted by `Messages.sh` into

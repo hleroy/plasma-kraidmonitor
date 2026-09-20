@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Screenshots of the healthy, degraded and syncing states in the README, plus
+  `tools/shotgen/` which generates them by rendering the widget's own QML with a
+  stubbed data source, so they cannot drift from the real interface and no array
+  has to be broken to picture one.
+
 ## [0.3] - 2026-09-20
 
 ### Added
