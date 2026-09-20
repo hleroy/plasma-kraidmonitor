@@ -162,6 +162,14 @@ msgmerge -U po/fr/plasma_applet_org.kde.plasma.kraidmonitor.po \
 Note `ki18n_install` silently does nothing when `po/` is missing, so a broken
 catalog path fails by shipping English rather than by failing the build.
 
+## Changelog and release notes
+
+Keep entries to **one line each**: what changed, plus a short clause of why only
+when it is not self-evident. No paragraphs, no narrating the investigation, no
+restating what the diff already shows. The `[0.3]` section is the reference for
+the intended density — if an entry wraps past two lines, it is too long. The same
+applies to GitHub release notes.
+
 ## Packaging
 
 `package/metadata.json`'s `KPlugin.Version` is the single source of truth for the

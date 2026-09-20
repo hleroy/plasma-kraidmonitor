@@ -84,9 +84,11 @@ PlasmoidItem {
                              "%1/s", KCoreAddons.Format.formatByteSize(kraidMonitor.syncSpeed * 1024)))
         }
         if (kraidMonitor.syncEtaSeconds >= 0) {
+            // formatSpelloutDuration spells out every unit ("12 minutes and 18
+            // seconds"), which elides away at the widget's default width.
             parts.push(i18nc("@info estimated time until the sync completes",
                              "~%1 left",
-                             KCoreAddons.Format.formatSpelloutDuration(kraidMonitor.syncEtaSeconds * 1000)))
+                             KCoreAddons.Format.formatDecimalDuration(kraidMonitor.syncEtaSeconds * 1000, 0)))
         }
         return parts.join(" · ")
     }

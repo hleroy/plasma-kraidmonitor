@@ -15,7 +15,7 @@ Kirigami.Icon {
     fallback: "drive-harddisk"
 
     Kirigami.Icon {
-        width: Math.round(parent.width * 0.45)
+        width: Math.round(parent.width * 0.38)
         height: width
         anchors.right: parent.right
         anchors.bottom: parent.bottom
