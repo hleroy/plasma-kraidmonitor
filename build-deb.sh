@@ -233,6 +233,16 @@ else
     print_warning "No compiled translations found in $LOCALE_DIR"
 fi
 
+# Copy the notification events. Without them KNotification has no event to
+# show, and the widget stays silent on a state change.
+if [ ! -f "notifications/kraidmonitor.notifyrc" ]; then
+    print_error "notifications/kraidmonitor.notifyrc not found"
+    exit 1
+fi
+mkdir -p "$USR_DIR/share/knotifications6"
+install -m 644 "notifications/kraidmonitor.notifyrc" "$USR_DIR/share/knotifications6/"
+print_info "Copied notification events"
+
 # Normalize permissions: cp preserves the working tree's modes, and anything not
 # world-readable makes Plasma report the package as non-existent once installed.
 find "$USR_DIR" -type d -exec chmod 755 {} +
@@ -254,7 +264,7 @@ Priority: optional
 Architecture: $ARCH
 Maintainer: $AUTHOR_NAME <$AUTHOR_EMAIL>
 Installed-Size: $INSTALLED_SIZE
-Depends: plasma-workspace, qml6-module-qtquick, qml6-module-org-kde-coreaddons
+Depends: plasma-workspace, qml6-module-qtquick, qml6-module-org-kde-coreaddons, qml6-module-org-kde-notifications
 Description: $DESCRIPTION
  KRaidMonitor is a KDE Plasma widget that monitors the status of RAID
  arrays on your system. It provides a quick and easy way to check the
@@ -264,6 +274,7 @@ Description: $DESCRIPTION
   - Automatically detects RAID arrays on your system
   - Displays the current status of the selected RAID array
   - Shows different icons based on the RAID array's state
+  - Desktop notification when the array state changes
   - Configurable update interval
 Homepage: $HOMEPAGE
 EOF

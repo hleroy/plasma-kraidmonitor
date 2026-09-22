@@ -22,6 +22,7 @@ is what identifies *which* disk dropped out of a degraded array.
 - Shows progress, transfer rate and an estimated time remaining while an array
   is rebuilding
 - Lists every member disk and its state in the tooltip
+- Sends a desktop notification when the array state changes (can be turned off)
 - Works on the desktop and in a panel
 - Configurable update interval, and a picker when several arrays are present
 - Translated into French; other languages welcome
@@ -102,6 +103,9 @@ is what identifies *which* disk dropped out of a degraded array.
 
 - Right-click on the widget and select "Configure RAID Monitor"
 - Adjust the "Update interval" setting as desired
+- Untick "Notify when the array state changes" to silence notifications, or
+  fine-tune each event (degraded, error, syncing, healthy) in System Settings →
+  Notifications
 
 ## Troubleshooting
 

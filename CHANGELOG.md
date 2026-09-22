@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-09-22
+
+### Added
+
+- Desktop notification when the array state changes, with events tunable in System Settings → Notifications.
+- Configuration option to turn notifications off (on by default).
+- `tools/raid-testbed.sh`, a menu-driven throwaway RAID1 on loop devices for testing states and notifications.
+
+### Changed
+
+- New dependency: `qml6-module-org-kde-notifications`.
+
 ## [0.3.1] - 2026-09-20
 
 ### Added
@@ -72,6 +84,7 @@ Initial release, for Plasma 5.
   detection of the available arrays.
 - Status icon reflecting the array state, and a configurable update interval.
 
+[0.4.0]: https://github.com/hleroy/plasma-kraidmonitor/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/hleroy/plasma-kraidmonitor/compare/v0.3...v0.3.1
 [0.3]: https://github.com/hleroy/plasma-kraidmonitor/compare/v0.2...v0.3
 [0.2]: https://github.com/hleroy/plasma-kraidmonitor/compare/216580b...v0.2

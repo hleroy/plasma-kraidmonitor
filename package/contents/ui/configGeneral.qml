@@ -13,6 +13,7 @@ Item {
 
     property string cfg_selectedArray
     property alias cfg_updateInterval: updateIntervalSpinBox.value
+    property alias cfg_notificationsEnabled: notificationsCheckBox.checked
 
     // Its own instance, purely to enumerate the arrays for the combo box.
     KRaidMonitorPrivate.KRaidMonitor {
@@ -64,6 +65,12 @@ Item {
             QQC2.Label {
                 text: i18np("second", "seconds", updateIntervalSpinBox.value)
             }
+        }
+
+        QQC2.CheckBox {
+            id: notificationsCheckBox
+            Kirigami.FormData.label: i18n("Notifications:")
+            text: i18n("Notify when the array state changes")
         }
     }
 }

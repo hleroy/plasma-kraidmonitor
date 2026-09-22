@@ -12,5 +12,8 @@
     <entry name="updateInterval" type="Int">
       <default>3</default>
     </entry>
+    <entry name="notificationsEnabled" type="Bool">
+      <default>true</default>
+    </entry>
   </group>
 </kcfg>

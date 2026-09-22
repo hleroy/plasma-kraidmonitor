@@ -6,6 +6,7 @@ import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.plasma.private.kraidmonitor as KRaidMonitorPrivate
 import org.kde.kirigami as Kirigami
 import org.kde.coreaddons as KCoreAddons
+import org.kde.notification
 
 
 PlasmoidItem {
@@ -242,6 +243,98 @@ PlasmoidItem {
 
     KRaidMonitorPrivate.KRaidMonitor {
         id: kraidMonitor
+    }
+
+    // The last state a notification decision was made on. A change is only
+    // announced when it happens on the same array and follows a real reading,
+    // so loading the widget or switching arrays stays silent.
+    property string notifiedArray: ""
+    property int notifiedState: KRaidMonitorPrivate.KRaidMonitor.NoArray
+
+    // Deferred with Qt.callLater: the plugin emits stateChanged before it
+    // refreshes the disk counts and members, which the text is built from.
+    onArrayStateChanged: Qt.callLater(root.checkStateChange)
+
+    Connections {
+        target: kraidMonitor
+        function onSelectedArrayChanged() {
+            Qt.callLater(root.checkStateChange)
+        }
+    }
+
+    function checkStateChange() {
+        var previous = root.notifiedState
+        var sameArray = kraidMonitor.selectedArray === root.notifiedArray
+        root.notifiedArray = kraidMonitor.selectedArray
+        root.notifiedState = root.arrayState
+
+        if (!sameArray || previous === root.arrayState
+            || previous === KRaidMonitorPrivate.KRaidMonitor.NoArray
+            || root.arrayState === KRaidMonitorPrivate.KRaidMonitor.NoArray) {
+            return
+        }
+        if (Plasmoid.configuration.notificationsEnabled) {
+            root.sendStateNotification(previous)
+        }
+    }
+
+    // Event ids must match the [Event/...] groups in kraidmonitor.notifyrc.
+    function sendStateNotification(previous) {
+        var eventId
+        var iconName
+        var summary
+        switch (root.arrayState) {
+        case KRaidMonitorPrivate.KRaidMonitor.Ok:
+            eventId = "ok"
+            iconName = "drive-harddisk"
+            summary = previous === KRaidMonitorPrivate.KRaidMonitor.Syncing
+                ? i18nc("@info notification", "Sync finished.")
+                : i18nc("@info notification", "The array is healthy again.")
+            break
+        case KRaidMonitorPrivate.KRaidMonitor.Syncing:
+            eventId = "syncing"
+            iconName = "drive-harddisk"
+            summary = i18nc("@info notification", "Sync started.")
+            break
+        case KRaidMonitorPrivate.KRaidMonitor.Degraded:
+            eventId = "degraded"
+            iconName = "dialog-warning"
+            summary = i18nc("@info notification", "The array is degraded.")
+            break
+        default:
+            eventId = "error"
+            iconName = "dialog-error"
+            summary = i18nc("@info notification", "The array is in an error state.")
+            break
+        }
+
+        var lines = [summary, root.detailText]
+        if (root.arrayState === KRaidMonitorPrivate.KRaidMonitor.Degraded) {
+            var members = kraidMonitor.members
+            for (var i = 0; i < members.length; i++) {
+                if (members[i].state !== "in_sync") {
+                    lines.push(i18nc("@info a member disk and its state, e.g. \"sdb: in sync\"",
+                                     "%1: %2", members[i].name, root.memberStateText(members[i].state)))
+                }
+            }
+        }
+
+        var notification = notificationComponent.createObject(root, {
+            eventId: eventId,
+            iconName: iconName,
+            title: i18nc("@title notification, %1 is the array name such as md0",
+                         "RAID array %1", kraidMonitor.selectedArray),
+            text: lines.join("\n"),
+        })
+        notification.sendEvent()
+    }
+
+    Component {
+        id: notificationComponent
+        // componentName must match the kraidmonitor.notifyrc basename.
+        Notification {
+            componentName: "kraidmonitor"
+        }
     }
 
     function updateConfig() {

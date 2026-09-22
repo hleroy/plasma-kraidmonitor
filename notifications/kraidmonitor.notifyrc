@@ -1,0 +1,37 @@
+[Global]
+IconName=drive-harddisk
+Name=RAID Monitor
+Name[fr]=Moniteur RAID
+Comment=RAID Monitor
+Comment[fr]=Moniteur RAID
+
+[Event/degraded]
+Name=Array degraded
+Name[fr]=Grappe dégradée
+Comment=A member disk of the RAID array has failed or been removed
+Comment[fr]=Un disque de la grappe RAID est en panne ou a été retiré
+Action=Popup
+Urgency=Critical
+
+[Event/error]
+Name=Array error
+Name[fr]=Erreur de grappe
+Comment=The RAID array is in an error state or cannot be read
+Comment[fr]=La grappe RAID est en erreur ou ne peut pas être lue
+Action=Popup
+Urgency=Critical
+
+[Event/syncing]
+Name=Array syncing
+Name[fr]=Synchronisation de la grappe
+Comment=The RAID array started a check, resync or rebuild
+Comment[fr]=La grappe RAID a commencé une vérification, une resynchronisation ou une reconstruction
+Action=Popup
+Urgency=Low
+
+[Event/ok]
+Name=Array healthy
+Name[fr]=Grappe saine
+Comment=The RAID array is back to a healthy state
+Comment[fr]=La grappe RAID est revenue à un état sain
+Action=Popup

@@ -50,5 +50,8 @@ install(FILES package/contents/icons/raidgreen.svg
               package/contents/icons/raidyellow.svg
         DESTINATION ${KDE_INSTALL_DATADIR}/plasma/plasmoids/org.kde.plasma.kraidmonitor/contents/icons)
 
+# Notification events, so they can be tuned in System Settings
+install(FILES notifications/kraidmonitor.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
+
 # Translations
 ki18n_install(po)

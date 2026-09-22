@@ -17,6 +17,10 @@ plasmoidviewer -a ./package
 
 # Reload after installing
 kquitapp6 plasmashell && kstart plasmashell
+
+# Throwaway RAID1 on loop devices (/dev/md99): menu to fail, re-add, scrub,
+# stop… an array and watch the widget's states and notifications
+tools/raid-testbed.sh
 ```
 
 There is no test suite, linter, or formatter. `plasmoidviewer` is the development
@@ -31,6 +35,9 @@ present, and this coupling is the main source of confusion:
    (installed by `plasma_install_package` in `CMakeLists.txt`). Pure QML + metadata.
 2. **The C++ QML extension plugin** — `plugin/` → `${KDE_INSTALL_QMLDIR}/org/kde/plasma/private/kraidmonitor/`,
    as `libkraidmonitorplugin.so` plus `qmldir`.
+
+A third, smaller file — `notifications/kraidmonitor.notifyrc` — is needed only for
+notifications (see below).
 
 `package/contents/ui/main.qml` reaches the C++ side by importing the plugin's URI,
 `org.kde.plasma.private.kraidmonitor`. That URI is repeated in four places and all
@@ -114,6 +121,21 @@ back to the config, so a temporarily missing array does not discard the setting.
 The config page instantiates its own `KRaidMonitor` purely to enumerate
 `availableArrays`; it therefore runs a second poll timer while the dialog is open.
 
+### Notifications
+
+State-change notifications are sent from `main.qml` through `org.kde.notification`
+(`qml6-module-org-kde-notifications`), gated by the `notificationsEnabled` config
+entry. The events are declared in `notifications/kraidmonitor.notifyrc`, a
+**third installed artifact** (`${KDE_INSTALL_KNOTIFYRCDIR}`, staged by hand in
+`build-deb.sh`); without it KNotification has no event and nothing pops up. The
+QML `componentName` must match that file's basename, and each `eventId` one of its
+`[Event/...]` groups.
+
+`checkStateChange()` only announces a change on the same array after a real
+reading, so loading the widget or switching arrays stays silent. It runs through
+`Qt.callLater`, because the plugin emits `stateChanged` before it refreshes the
+disk counts and members the notification text is built from.
+
 ### Screenshots
 
 `screenshots/*.png` are generated, not captured — regenerate with
@@ -153,6 +175,7 @@ Re-extract after touching any string:
 ```bash
 xgettext --from-code=UTF-8 -C --kde -ci18n \
     -ki18n:1 -ki18nc:1c,2 -ki18np:1,2 -ki18ncp:1c,2,3 \
+    --package-name=plasma-kraidmonitor --msgid-bugs-address=hleroy@hleroy.com \
     $(find package -name '*.qml') \
     -o po/plasma_applet_org.kde.plasma.kraidmonitor.pot
 msgmerge -U po/fr/plasma_applet_org.kde.plasma.kraidmonitor.po \
