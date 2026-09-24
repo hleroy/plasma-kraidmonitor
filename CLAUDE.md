@@ -69,7 +69,7 @@ The plugin exposes **no display strings**. It reports the state and the raw
 through `i18n()`. Adding a user-visible string in C++ would make it
 untranslatable — put it in QML instead.
 
-Two ordering rules in `updateArrayStatus()` are deliberate and easy to break:
+Three rules in `updateArrayStatus()` are deliberate and easy to break:
 
 - `sync_action` is checked **before** `array_state`, so a syncing array reports
   Syncing regardless of its state. The match must include `recover` (rebuilding
@@ -77,6 +77,10 @@ Two ordering rules in `updateArrayStatus()` are deliberate and easy to break:
 - Degraded is decided by `degraded > 0`, **not** by `array_state == "degraded"`.
   A real array with a failed member reports `array_state = clean`, so keying off
   the state alone reports a dead disk as OK.
+- Error is decided by matching the **failure** `array_state` values (`broken`,
+  `inactive`, `clear`, `suspended`), not by rejecting all but `clean`/`active`.
+  `write-pending`, `active-idle` and `read-auto` are routine on a healthy array;
+  treating them as errors fires a notification on ordinary writes.
 
 Every property emits its change signal only when the value actually changed;
 `updateArrayStatus()` runs on a timer, so emitting unconditionally would

@@ -132,7 +132,10 @@ void KRaidMonitor::updateArrayStatus()
         // Checked before the array state: a rebuilding array still reports
         // clean or active, and the sync is the more useful thing to show.
         state = Syncing;
-    } else if (arrayState != QLatin1String("clean") && arrayState != QLatin1String("active")) {
+    } else if (arrayState == QLatin1String("broken") || arrayState == QLatin1String("inactive")
+               || arrayState == QLatin1String("clear") || arrayState == QLatin1String("suspended")) {
+        // Match the failure states rather than the healthy ones: write-pending,
+        // active-idle and read-auto are routine transitions of a working array.
         state = Error;
     } else if (degraded > 0) {
         // A failed member normally leaves array_state at clean, so the disk
